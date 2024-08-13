@@ -35,6 +35,10 @@ func TestEngine(t *testing.T) {
 	g.Expect(err).ShouldNot(HaveOccurred())
 	g.Expect(c).ShouldNot(BeNil())
 
+	crds, err := c.CRDObjects()
+	g.Expect(err).ShouldNot(HaveOccurred())
+	g.Expect(crds).ShouldNot(BeEmpty())
+
 	r, err := c.Render(
 		ctx,
 		t.Name(),

@@ -22,6 +22,27 @@ type Chart struct {
 	decoder    runtime.Serializer
 }
 
+func (c *Chart) CRDObjects() ([]unstructured.Unstructured, error) {
+	crds := c.helmChart.CRDObjects()
+
+	sort.Slice(crds, func(i, j int) bool {
+		return crds[i].Name < crds[j].Name
+	})
+
+	answer := make([]unstructured.Unstructured, 0)
+
+	for _, crd := range crds {
+		items, err := toUnstructured(c.decoder, crd.File.Data)
+		if err != nil {
+			return nil, fmt.Errorf("cannot decode CRD %s: %w", crd.Name, err)
+		}
+
+		answer = append(answer, items...)
+	}
+
+	return answer, nil
+}
+
 func (c *Chart) Render(
 	ctx context.Context,
 	name string,
