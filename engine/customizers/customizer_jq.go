@@ -6,8 +6,8 @@ import (
 	"github.com/itchyny/gojq"
 )
 
-func JQ(expression string) func(map[string]any) (map[string]any, error) {
-	return func(in map[string]any) (map[string]any, error) {
+func JQ(expression string) func(map[string]interface{}) (map[string]interface{}, error) {
+	return func(in map[string]interface{}) (map[string]interface{}, error) {
 		query, err := gojq.Parse(expression)
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse expression %s: %w", expression, err)
@@ -24,7 +24,7 @@ func JQ(expression string) func(map[string]any) (map[string]any, error) {
 			return in, err
 		}
 
-		if r, ok := v.(map[string]any); ok {
+		if r, ok := v.(map[string]interface{}); ok {
 			return r, nil
 		}
 

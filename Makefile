@@ -45,7 +45,7 @@ fmt: goimport
 
 .PHONY: test
 test:
-	go test ./pkg/... 
+	go test ./...
 
 .PHONY: deps
 deps:

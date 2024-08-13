@@ -26,3 +26,4 @@ linters:
     - maligned
     - depguard
     - gci
+    - gofumpt
