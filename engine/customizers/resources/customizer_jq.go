@@ -15,7 +15,27 @@ func JQ(expression string) func(unstructured.Unstructured) (unstructured.Unstruc
 			return in, fmt.Errorf("unable to parse expression %s: %w", expression, err)
 		}
 
-		it := query.Run(in.Object)
+		code, err := gojq.Compile(
+			query,
+			gojq.WithVariables([]string{
+				"$gvk", "$gv", "$group", "$version", "$kind", "$name", "$namespace",
+			}),
+		)
+
+		if err != nil {
+			return in, fmt.Errorf("unable to compile expression %s: %w", expression, err)
+		}
+
+		it := code.Run(
+			in.Object,
+			in.GetObjectKind().GroupVersionKind().GroupVersion().String()+":"+in.GetKind(),
+			in.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+			in.GetObjectKind().GroupVersionKind().Group,
+			in.GetObjectKind().GroupVersionKind().Version,
+			in.GetObjectKind().GroupVersionKind().Kind,
+			in.GetName(),
+			in.GetNamespace(),
+		)
 
 		v, ok := it.Next()
 		if !ok {

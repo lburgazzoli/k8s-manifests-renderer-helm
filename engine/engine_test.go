@@ -13,6 +13,13 @@ import (
 	"github.com/rs/xid"
 )
 
+//nolint:gochecknoglobals
+var cs = engine.ChartSpec{
+	Repo:    "https://dapr.github.io/helm-charts/",
+	Name:    "dapr",
+	Version: "1.13.5",
+}
+
 func TestEngine(t *testing.T) {
 	t.Parallel()
 
@@ -21,12 +28,7 @@ func TestEngine(t *testing.T) {
 	e := engine.New()
 	g.Expect(e).ShouldNot(BeNil())
 
-	c, err := e.Load(engine.ChartSpec{
-		Repo:    "https://dapr.github.io/helm-charts/",
-		Name:    "dapr",
-		Version: "1.13.5",
-	})
-
+	c, err := e.Load(cs)
 	g.Expect(err).ShouldNot(HaveOccurred())
 	g.Expect(c).ShouldNot(BeNil())
 
@@ -56,12 +58,7 @@ func TestEngineWithValuesCustomizers(t *testing.T) {
 	e := engine.New()
 	g.Expect(e).ShouldNot(BeNil())
 
-	c, err := e.Load(
-		engine.ChartSpec{
-			Repo:    "https://dapr.github.io/helm-charts/",
-			Name:    "dapr",
-			Version: "1.13.5",
-		},
+	c, err := e.Load(cs,
 		engine.WithValuesCustomizer(values.JQ(`.dapr_operator.replicaCount = 6`)),
 	)
 
@@ -86,8 +83,22 @@ func TestEngineWithValuesCustomizers(t *testing.T) {
 			jq.Match(`.metadata.name == "dapr-operator" and .spec.replicas == 6`)))
 }
 
-const customiseDaprOperatorReplicas = `
-if (.metadata.name == "dapr-operator")
+const customiseDaprOperatorReplicas1 = `
+if ( $gvk == "apps/v1:Deployment" and $name == "dapr-operator" ) 
+then 
+  .spec.replicas = 4
+end
+`
+
+const customiseDaprOperatorReplicas2 = `
+if ( $gv == "apps/v1" and $kind == "Deployment" and $name == "dapr-operator" ) 
+then 
+  .spec.replicas = 4
+end
+`
+
+const customiseDaprOperatorReplicas3 = `
+if ( $group == "apps" and $version == "v1" and $kind == "Deployment" and $name == "dapr-operator" ) 
 then 
   .spec.replicas = 4
 end
@@ -101,29 +112,40 @@ func TestEngineWithResourcesCustomizers(t *testing.T) {
 	e := engine.New()
 	g.Expect(e).ShouldNot(BeNil())
 
-	c, err := e.Load(
-		engine.ChartSpec{
-			Repo:    "https://dapr.github.io/helm-charts/",
-			Name:    "dapr",
-			Version: "1.13.5",
-		},
-		engine.WithResourcesCustomizer(resources.JQ(customiseDaprOperatorReplicas)),
-	)
+	var flagtests = []struct {
+		name       string
+		expression string
+	}{
+		{"gvk", customiseDaprOperatorReplicas1},
+		{"gv_k", customiseDaprOperatorReplicas2},
+		{"g_v_k", customiseDaprOperatorReplicas3},
+	}
 
-	g.Expect(err).ShouldNot(HaveOccurred())
-	g.Expect(c).ShouldNot(BeNil())
+	for _, tt := range flagtests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	r, err := c.Render(
-		t.Name(),
-		xid.New().String(),
-		0,
-		nil,
-	)
+			c, err := e.Load(
+				cs,
+				engine.WithResourcesCustomizer(resources.JQ(tt.expression)),
+			)
 
-	g.Expect(err).ShouldNot(HaveOccurred())
-	g.Expect(r).ShouldNot(BeEmpty())
+			g.Expect(err).ShouldNot(HaveOccurred())
+			g.Expect(c).ShouldNot(BeNil())
 
-	g.Expect(r).To(
-		ContainElement(
-			jq.Match(`.metadata.name == "dapr-operator" and .spec.replicas == 4`)))
+			r, err := c.Render(
+				t.Name(),
+				xid.New().String(),
+				0,
+				nil,
+			)
+
+			g.Expect(err).ShouldNot(HaveOccurred())
+			g.Expect(r).ShouldNot(BeEmpty())
+
+			g.Expect(r).To(
+				ContainElement(
+					jq.Match(`.metadata.name == "dapr-operator" and .spec.replicas == 4`)))
+		})
+	}
 }
