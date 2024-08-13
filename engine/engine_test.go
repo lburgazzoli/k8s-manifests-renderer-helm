@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/lburgazzoli/helm-libs/engine/customizers/resources"
-	"github.com/lburgazzoli/helm-libs/engine/customizers/values"
+	"github.com/lburgazzoli/k8s-manifests-renderer-helm/engine/customizers/resources"
+	"github.com/lburgazzoli/k8s-manifests-renderer-helm/engine/customizers/values"
 
 	. "github.com/onsi/gomega"
 
 	"github.com/lburgazzoli/gomega-matchers/pkg/matchers/jq"
-	"github.com/lburgazzoli/helm-libs/engine"
+	"github.com/lburgazzoli/k8s-manifests-renderer-helm/engine"
 	"github.com/rs/xid"
 )
 

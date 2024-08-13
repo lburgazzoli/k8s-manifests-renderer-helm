@@ -1,4 +1,4 @@
-module github.com/lburgazzoli/helm-libs
+module github.com/lburgazzoli/k8s-manifests-renderer-helm
 
 go 1.22.6
 
