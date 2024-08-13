@@ -3,39 +3,51 @@ package engine
 import (
 	"maps"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	"helm.sh/helm/v3/pkg/action"
 )
 
-type ChartOptions struct {
-	action.ChartPathOptions
-	Name string
+type ValuesCustomizer func(map[string]interface{}) (map[string]interface{}, error)
+type ResourcesCustomizer func(unstructured.Unstructured) (unstructured.Unstructured, error)
 
-	ValuesCustomizers []ValuesCustomizer
-	Overrides         map[string]interface{}
+type ChartOptions struct {
+	pathOptions action.ChartPathOptions
+	name        string
+
+	valuesCustomizers    []ValuesCustomizer
+	resourcesCustomizers []ResourcesCustomizer
+	overrides            map[string]interface{}
 }
 
 type ChartOption func(*ChartOptions)
 
 func WithUsername(value string) ChartOption {
 	return func(opts *ChartOptions) {
-		opts.Username = value
+		opts.pathOptions.Username = value
 	}
 }
 
 func WithPassword(value string) ChartOption {
 	return func(opts *ChartOptions) {
-		opts.Password = value
+		opts.pathOptions.Password = value
 	}
 }
 
-func WithCustomizer(value ValuesCustomizer) ChartOption {
+func WithValuesCustomizer(value ValuesCustomizer) ChartOption {
 	return func(opts *ChartOptions) {
-		opts.ValuesCustomizers = append(opts.ValuesCustomizers, value)
+		opts.valuesCustomizers = append(opts.valuesCustomizers, value)
+	}
+}
+
+func WithResourcesCustomizer(value ResourcesCustomizer) ChartOption {
+	return func(opts *ChartOptions) {
+		opts.resourcesCustomizers = append(opts.resourcesCustomizers, value)
 	}
 }
 
 func WithOverrides(value map[string]interface{}) ChartOption {
 	return func(opts *ChartOptions) {
-		opts.Overrides = maps.Clone(value)
+		opts.overrides = maps.Clone(value)
 	}
 }

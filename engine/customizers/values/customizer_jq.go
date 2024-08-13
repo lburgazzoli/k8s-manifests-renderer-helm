@@ -1,4 +1,4 @@
-package customizers
+package values
 
 import (
 	"fmt"

@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -65,7 +66,12 @@ func (c *Chart) Render(
 		result = append(result, ul...)
 	}
 
-	return result, nil
+	answer, err := c.customizeResources(result)
+	if err != nil {
+		return nil, err
+	}
+
+	return answer, nil
 }
 
 func (c *Chart) renderValues(
@@ -78,15 +84,15 @@ func (c *Chart) renderValues(
 		values = make(map[string]interface{})
 	}
 
-	overrides := c.options.Overrides
+	overrides := c.options.overrides
 	if overrides == nil {
 		overrides = make(map[string]interface{})
 	}
 
-	for i := range c.options.ValuesCustomizers {
-		nv, err := c.options.ValuesCustomizers[i](values)
+	for i := range c.options.valuesCustomizers {
+		nv, err := c.options.valuesCustomizers[i](values)
 		if err != nil {
-			return chartutil.Values{}, fmt.Errorf("unable to cusomize values: %w", err)
+			return chartutil.Values{}, fmt.Errorf("unable to cusomise values: %w", err)
 		}
 
 		values = nv
@@ -116,4 +122,35 @@ func (c *Chart) renderValues(
 	}
 
 	return rv, nil
+}
+
+func (c *Chart) customizeResources(resources []unstructured.Unstructured) ([]unstructured.Unstructured, error) {
+	if len(resources) == 0 {
+		return resources, nil
+	}
+
+	if len(c.options.resourcesCustomizers) == 0 {
+		return resources, nil
+	}
+
+	res := slices.Clone(resources)
+
+	for _, rc := range c.options.resourcesCustomizers {
+		for i := range res {
+			resource, err := rc(res[i])
+
+			if err != nil {
+				return nil, fmt.Errorf(
+					"cannot customise resource %s:%s/%s: %w",
+					res[i].GroupVersionKind().String(),
+					res[i].GetNamespace(),
+					res[i].GetName(),
+					err)
+			}
+
+			res[i] = resource
+		}
+	}
+
+	return res, nil
 }
