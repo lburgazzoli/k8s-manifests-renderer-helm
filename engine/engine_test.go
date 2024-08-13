@@ -34,6 +34,8 @@ func TestEngine(t *testing.T) {
 	c, err := e.Load(ctx, cs)
 	g.Expect(err).ShouldNot(HaveOccurred())
 	g.Expect(c).ShouldNot(BeNil())
+	g.Expect(c.Name()).Should(Equal(cs.Name))
+	g.Expect(c.Version()).Should(Equal(cs.Version))
 
 	crds, err := c.CRDObjects()
 	g.Expect(err).ShouldNot(HaveOccurred())

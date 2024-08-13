@@ -22,6 +22,22 @@ type Chart struct {
 	decoder    runtime.Serializer
 }
 
+func (c *Chart) Name() string {
+	if c.helmChart == nil {
+		return ""
+	}
+
+	return c.helmChart.Metadata.Name
+}
+
+func (c *Chart) Version() string {
+	if c.helmChart == nil {
+		return ""
+	}
+
+	return c.helmChart.Metadata.Version
+}
+
 func (c *Chart) CRDObjects() ([]unstructured.Unstructured, error) {
 	crds := c.helmChart.CRDObjects()
 
