@@ -25,9 +25,8 @@ func (c *Chart) Render(
 	namespace string,
 	revision int,
 	values map[string]interface{},
-	overrides map[string]interface{},
 ) ([]unstructured.Unstructured, error) {
-	rv, err := c.renderValues(name, namespace, revision, values, overrides)
+	rv, err := c.renderValues(name, namespace, revision, values)
 	if err != nil {
 		return nil, fmt.Errorf("cannot render values: %w", err)
 	}
@@ -74,12 +73,12 @@ func (c *Chart) renderValues(
 	namespace string,
 	revision int,
 	values map[string]interface{},
-	overrides map[string]interface{},
 ) (chartutil.Values, error) {
 	if values == nil {
 		values = make(map[string]interface{})
 	}
 
+	overrides := c.options.Overrides
 	if overrides == nil {
 		overrides = make(map[string]interface{})
 	}
