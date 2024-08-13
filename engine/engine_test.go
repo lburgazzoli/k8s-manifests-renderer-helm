@@ -1,6 +1,7 @@
 package engine_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/lburgazzoli/helm-libs/engine/customizers/resources"
@@ -23,16 +24,19 @@ var cs = engine.ChartSpec{
 func TestEngine(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
+
 	g := NewWithT(t)
 
 	e := engine.New()
 	g.Expect(e).ShouldNot(BeNil())
 
-	c, err := e.Load(cs)
+	c, err := e.Load(ctx, cs)
 	g.Expect(err).ShouldNot(HaveOccurred())
 	g.Expect(c).ShouldNot(BeNil())
 
 	r, err := c.Render(
+		ctx,
 		t.Name(),
 		xid.New().String(),
 		0,
@@ -53,19 +57,24 @@ func TestEngine(t *testing.T) {
 func TestEngineWithValuesCustomizers(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
+
 	g := NewWithT(t)
 
 	e := engine.New()
 	g.Expect(e).ShouldNot(BeNil())
 
-	c, err := e.Load(cs,
-		engine.WithValuesCustomizer(values.JQ(`.dapr_operator.replicaCount = 6`)),
+	c, err := e.Load(
+		ctx,
+		cs,
+		engine.WithValuesCustomizers(values.JQ(`.dapr_operator.replicaCount = 6`)),
 	)
 
 	g.Expect(err).ShouldNot(HaveOccurred())
 	g.Expect(c).ShouldNot(BeNil())
 
 	r, err := c.Render(
+		ctx,
 		t.Name(),
 		xid.New().String(),
 		0,
@@ -107,6 +116,8 @@ end
 func TestEngineWithResourcesCustomizers(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
+
 	g := NewWithT(t)
 
 	e := engine.New()
@@ -126,14 +137,16 @@ func TestEngineWithResourcesCustomizers(t *testing.T) {
 			t.Parallel()
 
 			c, err := e.Load(
+				ctx,
 				cs,
-				engine.WithResourcesCustomizer(resources.JQ(tt.expression)),
+				engine.WithResourcesCustomizers(resources.JQ(tt.expression)),
 			)
 
 			g.Expect(err).ShouldNot(HaveOccurred())
 			g.Expect(c).ShouldNot(BeNil())
 
 			r, err := c.Render(
+				ctx,
 				t.Name(),
 				xid.New().String(),
 				0,

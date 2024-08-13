@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -24,7 +25,7 @@ type Instance struct {
 	env *cli.EnvSettings
 }
 
-func (in *Instance) Load(cs ChartSpec, opts ...ChartOption) (*Chart, error) {
+func (in *Instance) Load(ctx context.Context, cs ChartSpec, opts ...ChartOption) (*Chart, error) {
 	options := ChartOptions{}
 	options.name = cs.Name
 	options.pathOptions.RepoURL = cs.Repo
@@ -50,6 +51,12 @@ func (in *Instance) Load(cs ChartSpec, opts ...ChartOption) (*Chart, error) {
 			options.pathOptions.RepoURL,
 			options.name,
 			options.pathOptions.Version, err)
+	}
+
+	for i := range options.resourcesCustomizers {
+		if err := options.resourcesCustomizers[i].Configure(ctx); err != nil {
+			return nil, fmt.Errorf("unable to initialize customizer: %w", err)
+		}
 	}
 
 	rv := Chart{

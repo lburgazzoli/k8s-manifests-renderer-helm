@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"maps"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -8,8 +9,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 )
 
-type ValuesCustomizer func(map[string]interface{}) (map[string]interface{}, error)
-type ResourcesCustomizer func(unstructured.Unstructured) (unstructured.Unstructured, error)
+type ValuesCustomizer func(context.Context, map[string]interface{}) (map[string]interface{}, error)
 
 type ChartOptions struct {
 	pathOptions action.ChartPathOptions
@@ -34,15 +34,15 @@ func WithPassword(value string) ChartOption {
 	}
 }
 
-func WithValuesCustomizer(value ValuesCustomizer) ChartOption {
+func WithValuesCustomizers(values ...ValuesCustomizer) ChartOption {
 	return func(opts *ChartOptions) {
-		opts.valuesCustomizers = append(opts.valuesCustomizers, value)
+		opts.valuesCustomizers = append(opts.valuesCustomizers, values...)
 	}
 }
 
-func WithResourcesCustomizer(value ResourcesCustomizer) ChartOption {
+func WithResourcesCustomizers(values ...ResourcesCustomizer) ChartOption {
 	return func(opts *ChartOptions) {
-		opts.resourcesCustomizers = append(opts.resourcesCustomizers, value)
+		opts.resourcesCustomizers = append(opts.resourcesCustomizers, values...)
 	}
 }
 
@@ -50,4 +50,9 @@ func WithOverrides(value map[string]interface{}) ChartOption {
 	return func(opts *ChartOptions) {
 		opts.overrides = maps.Clone(value)
 	}
+}
+
+type ResourcesCustomizer interface {
+	Configure(ctx context.Context) error
+	Apply(ctx context.Context, in unstructured.Unstructured) (unstructured.Unstructured, error)
 }

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"slices"
 	"sort"
@@ -22,12 +23,13 @@ type Chart struct {
 }
 
 func (c *Chart) Render(
+	ctx context.Context,
 	name string,
 	namespace string,
 	revision int,
 	values map[string]interface{},
 ) ([]unstructured.Unstructured, error) {
-	rv, err := c.renderValues(name, namespace, revision, values)
+	rv, err := c.renderValues(ctx, name, namespace, revision, values)
 	if err != nil {
 		return nil, fmt.Errorf("cannot render values: %w", err)
 	}
@@ -66,7 +68,7 @@ func (c *Chart) Render(
 		result = append(result, ul...)
 	}
 
-	answer, err := c.customizeResources(result)
+	answer, err := c.customizeResources(ctx, result)
 	if err != nil {
 		return nil, err
 	}
@@ -75,6 +77,7 @@ func (c *Chart) Render(
 }
 
 func (c *Chart) renderValues(
+	ctx context.Context,
 	name string,
 	namespace string,
 	revision int,
@@ -90,7 +93,7 @@ func (c *Chart) renderValues(
 	}
 
 	for i := range c.options.valuesCustomizers {
-		nv, err := c.options.valuesCustomizers[i](values)
+		nv, err := c.options.valuesCustomizers[i](ctx, values)
 		if err != nil {
 			return chartutil.Values{}, fmt.Errorf("unable to cusomise values: %w", err)
 		}
@@ -124,7 +127,7 @@ func (c *Chart) renderValues(
 	return rv, nil
 }
 
-func (c *Chart) customizeResources(resources []unstructured.Unstructured) ([]unstructured.Unstructured, error) {
+func (c *Chart) customizeResources(ctx context.Context, resources []unstructured.Unstructured) ([]unstructured.Unstructured, error) {
 	if len(resources) == 0 {
 		return resources, nil
 	}
@@ -137,7 +140,7 @@ func (c *Chart) customizeResources(resources []unstructured.Unstructured) ([]uns
 
 	for _, rc := range c.options.resourcesCustomizers {
 		for i := range res {
-			resource, err := rc(res[i])
+			resource, err := rc.Apply(ctx, res[i])
 
 			if err != nil {
 				return nil, fmt.Errorf(

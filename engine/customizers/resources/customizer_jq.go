@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -8,48 +9,63 @@ import (
 	"github.com/itchyny/gojq"
 )
 
-func JQ(expression string) func(unstructured.Unstructured) (unstructured.Unstructured, error) {
-	return func(in unstructured.Unstructured) (unstructured.Unstructured, error) {
-		query, err := gojq.Parse(expression)
-		if err != nil {
-			return in, fmt.Errorf("unable to parse expression %s: %w", expression, err)
-		}
+type JQCustomizer struct {
+	expression string
+	code       *gojq.Code
+}
 
-		code, err := gojq.Compile(
-			query,
-			gojq.WithVariables([]string{
-				"$gvk", "$gv", "$group", "$version", "$kind", "$name", "$namespace",
-			}),
-		)
+func (c *JQCustomizer) Configure(_ context.Context) error {
+	query, err := gojq.Parse(c.expression)
+	if err != nil {
+		return fmt.Errorf("unable to parse expression %s: %w", c.expression, err)
+	}
 
-		if err != nil {
-			return in, fmt.Errorf("unable to compile expression %s: %w", expression, err)
-		}
+	code, err := gojq.Compile(
+		query,
+		gojq.WithVariables([]string{
+			"$gvk", "$gv", "$group", "$version", "$kind", "$name", "$namespace",
+		}),
+	)
 
-		it := code.Run(
-			in.Object,
-			in.GetObjectKind().GroupVersionKind().GroupVersion().String()+":"+in.GetKind(),
-			in.GetObjectKind().GroupVersionKind().GroupVersion().String(),
-			in.GetObjectKind().GroupVersionKind().Group,
-			in.GetObjectKind().GroupVersionKind().Version,
-			in.GetObjectKind().GroupVersionKind().Kind,
-			in.GetName(),
-			in.GetNamespace(),
-		)
+	if err != nil {
+		return fmt.Errorf("unable to compile expression %s: %w", c.expression, err)
+	}
 
-		v, ok := it.Next()
-		if !ok {
-			return in, nil
-		}
+	c.code = code
 
-		if err, ok := v.(error); ok {
-			return in, err
-		}
+	return nil
+}
 
-		if r, ok := v.(map[string]interface{}); ok {
-			in.Object = r
-		}
+func (c *JQCustomizer) Apply(ctx context.Context, in unstructured.Unstructured) (unstructured.Unstructured, error) {
+	it := c.code.RunWithContext(ctx,
+		in.Object,
+		in.GetObjectKind().GroupVersionKind().GroupVersion().String()+":"+in.GetKind(),
+		in.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+		in.GetObjectKind().GroupVersionKind().Group,
+		in.GetObjectKind().GroupVersionKind().Version,
+		in.GetObjectKind().GroupVersionKind().Kind,
+		in.GetName(),
+		in.GetNamespace(),
+	)
 
+	v, ok := it.Next()
+	if !ok {
 		return in, nil
+	}
+
+	if err, ok := v.(error); ok {
+		return in, err
+	}
+
+	if r, ok := v.(map[string]interface{}); ok {
+		in.Object = r
+	}
+
+	return in, nil
+}
+
+func JQ(expression string) *JQCustomizer {
+	return &JQCustomizer{
+		expression: expression,
 	}
 }
