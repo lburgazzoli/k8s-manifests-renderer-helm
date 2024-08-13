@@ -9,7 +9,7 @@ LINT_TIMEOUT := 10m
 GOIMPORT ?= $(LOCALBIN)/goimports
 GOIMPORT_VERSION ?= latest
 GOLANGCI ?= $(LOCALBIN)/golangci-lint
-GOLANGCI_VERSION ?= v1.57.2
+GOLANGCI_VERSION ?= v1.59.1
 YQ ?= $(LOCALBIN)/yq
 KUBECTL ?= kubectl
 

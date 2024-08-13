@@ -10,20 +10,10 @@ linters-settings:
 linters:
   enable-all: true
   disable:
-    - exhaustivestruct
+    - gomnd
+    - execinquery
     - exhaustruct
-    - goerr113
-    - golint
-    - interfacer
-    - ireturn
-    - nosnakecase
-    - scopelint
     - varnamelen
-    - varcheck
-    - ifshort
-    - deadcode
-    - structcheck
-    - maligned
     - depguard
     - gci
     - gofumpt
