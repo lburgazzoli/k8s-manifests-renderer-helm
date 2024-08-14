@@ -21,10 +21,12 @@ var cs = engine.ChartSpec{
 	Version: "1.13.5",
 }
 
+//nolint:lll
 func TestEngine(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	id := xid.New().String()
 
 	g := NewWithT(t)
 
@@ -50,6 +52,11 @@ func TestEngine(t *testing.T) {
 			"dapr_operator": map[string]interface{}{
 				"replicaCount": 5,
 			},
+			"dapr_sidecar_injector": map[string]any{
+				"image": map[string]any{
+					"name": "docker.io/daprio/daprd:" + id,
+				},
+			},
 		})
 
 	g.Expect(err).ShouldNot(HaveOccurred())
@@ -58,6 +65,9 @@ func TestEngine(t *testing.T) {
 	g.Expect(r).To(
 		ContainElement(
 			jq.Match(`.metadata.name == "dapr-operator" and .spec.replicas == 5`)))
+	g.Expect(r).To(
+		ContainElement(
+			jq.Match(`.metadata.name == "dapr-sidecar-injector" and (.spec.template.spec.containers[0].env[] | select(.name == "SIDECAR_IMAGE") | .value == "docker.io/daprio/daprd:%s")`, id)))
 }
 
 func TestEngineWithValuesCustomizers(t *testing.T) {
