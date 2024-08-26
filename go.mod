@@ -6,7 +6,7 @@ require (
 	github.com/itchyny/gojq v0.12.16
 	github.com/lburgazzoli/gomega-matchers v0.0.0-20240813085813-c062a40739b0
 	github.com/onsi/gomega v1.34.1
-	github.com/rs/xid v1.5.0
+	github.com/rs/xid v1.6.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.15.4
 	k8s.io/apimachinery v0.31.0
