@@ -23,11 +23,7 @@ type Chart struct {
 }
 
 func (c *Chart) Name() string {
-	if c.helmChart == nil {
-		return ""
-	}
-
-	return c.helmChart.Metadata.Name
+	return c.options.name
 }
 
 func (c *Chart) Version() string {
@@ -35,7 +31,19 @@ func (c *Chart) Version() string {
 		return ""
 	}
 
-	return c.helmChart.Metadata.Version
+	return c.options.pathOptions.Version
+}
+
+func (c *Chart) Repo() string {
+	return c.options.pathOptions.RepoURL
+}
+
+func (c *Chart) Spec() ChartSpec {
+	return ChartSpec{
+		Name:    c.Name(),
+		Version: c.Version(),
+		Repo:    c.Repo(),
+	}
 }
 
 func (c *Chart) CRDObjects() ([]unstructured.Unstructured, error) {
