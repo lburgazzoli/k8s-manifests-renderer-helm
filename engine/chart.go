@@ -23,7 +23,11 @@ type Chart struct {
 }
 
 func (c *Chart) Name() string {
-	return c.options.name
+	if c.helmChart == nil {
+		return ""
+	}
+
+	return c.helmChart.Metadata.Name
 }
 
 func (c *Chart) Version() string {
@@ -31,7 +35,7 @@ func (c *Chart) Version() string {
 		return ""
 	}
 
-	return c.options.pathOptions.Version
+	return c.helmChart.Metadata.Version
 }
 
 func (c *Chart) Repo() string {
