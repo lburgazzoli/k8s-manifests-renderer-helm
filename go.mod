@@ -4,7 +4,7 @@ go 1.22.6
 
 require (
 	github.com/itchyny/gojq v0.12.16
-	github.com/lburgazzoli/gomega-matchers v0.1.0
+	github.com/lburgazzoli/gomega-matchers v0.1.1
 	github.com/onsi/gomega v1.34.2
 	github.com/rs/xid v1.6.0
 	gopkg.in/yaml.v3 v3.0.1
