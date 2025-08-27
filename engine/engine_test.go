@@ -1,7 +1,6 @@
 package engine_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/lburgazzoli/k8s-manifests-renderer-helm/engine/customizers/resources"
@@ -25,7 +24,7 @@ var cs = engine.ChartSpec{
 func TestEngine(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	id := xid.New().String()
 
 	g := NewWithT(t)
@@ -75,7 +74,7 @@ func TestEngine(t *testing.T) {
 func TestEngineWithValuesCustomizers(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	g := NewWithT(t)
 
@@ -134,7 +133,7 @@ end
 func TestEngineWithResourcesCustomizers(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	g := NewWithT(t)
 

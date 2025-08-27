@@ -1,19 +1,40 @@
-linters-settings:
-  lll:
-    line-length: 170
-  goconst:
-    ignore-tests: true
-  revive:
-    rules:
-      - name: dot-imports
-        disabled: true
+version: "2"
 linters:
-  enable-all: true
+  default: all
   disable:
-    - gomnd
-    - execinquery
-    - exhaustruct
-    - varnamelen
     - depguard
-    - gci
-    - gofumpt
+    - exhaustruct
+    - mnd
+    - varnamelen
+  settings:
+    lll:
+      line-length: 170
+    revive:
+      rules:
+        - name: dot-imports
+          disabled: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - goconst
+        path: (.+)_test\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

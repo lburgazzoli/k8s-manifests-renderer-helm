@@ -6,10 +6,8 @@ LINT_GOGC := 10
 LINT_TIMEOUT := 10m
 
 ## Tools
-GOIMPORT ?= $(LOCALBIN)/goimports
-GOIMPORT_VERSION ?= latest
 GOLANGCI ?= $(LOCALBIN)/golangci-lint
-GOLANGCI_VERSION ?= v1.59.1
+GOLANGCI_VERSION ?= v2.1.2
 YQ ?= $(LOCALBIN)/yq
 KUBECTL ?= kubectl
 
@@ -39,9 +37,9 @@ clean:
 	go clean -x -testcache
 
 .PHONY: fmt
-fmt: goimport
-	$(GOIMPORT) -l -w .
-	go fmt ./...
+fmt:
+	@$(GOLANGCI) fmt \
+    	--config .golangci.yml
 
 .PHONY: test
 test:
@@ -58,25 +56,17 @@ check: check/lint
 check/lint: golangci-lint
 	@$(GOLANGCI) run \
 		--config .golangci.yml \
-		--out-format tab \
-		--exclude-dirs etc \
 		--timeout $(LINT_TIMEOUT)
 
 LOCALBIN ?= $(shell pwd)/bin
 $(LOCALBIN):
 	@mkdir -p $(LOCALBIN)
 
-.PHONY: goimport
-goimport: $(GOIMPORT)
-$(GOIMPORT): $(LOCALBIN)
-	@test -s $(GOIMPORT) || \
-	GOBIN=$(LOCALBIN) go install golang.org/x/tools/cmd/goimports@$(GOIMPORT_VERSION)
-
 .PHONY: golangci-lint
 golangci-lint: $(GOLANGCI)
 $(GOLANGCI): $(LOCALBIN)
 	@test -s $(GOLANGCI) || \
-	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_VERSION)
+	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_VERSION)
 
 .PHONY: yq
 yq: $(YQ)
